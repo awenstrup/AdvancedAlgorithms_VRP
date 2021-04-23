@@ -1,5 +1,8 @@
+# Base python
 from typing import Tuple, List
 
+# Extended Python
+import png
 
 class Warehouse:
     """A small utility class to hold information about the warehouse we are opperating in"""
@@ -36,7 +39,7 @@ class Warehouse:
                         occupancy_grid[i].append(False)
                         base = (i, j)
 
-        return occupancy_grid, start, end
+        return occupancy_grid, base
 
     def load_warehouse_from_png(path: str) -> Tuple[List[List[bool]], Tuple[int, int], Tuple[int, int]]:
         """Given a path to a PNG, load a warehouse.
