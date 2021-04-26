@@ -9,3 +9,5 @@ if __name__ == "__main__":
     for i in range(1000):
         p.mutate()
         # print(p.coord_list)
+
+    p.save_as_gif(5)

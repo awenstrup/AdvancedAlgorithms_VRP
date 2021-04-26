@@ -1,6 +1,11 @@
 # Base python imports
+import os
 import random
 from typing import Tuple, Optional, List, Union
+
+# Extended python imports
+from PIL import Image
+import png
 
 # Project imports
 from utils import Warehouse
@@ -143,4 +148,41 @@ class Path:
     def add_point(self, point: Tuple[int, int]) -> None:
         """Add a new point to the path"""
         self.coord_list.append(point)
+
+    def save_as_gif(self, time: int):
+        """Save the current path as a gif
+        
+        :param int time: The total time for the gif. Change this depending
+            on how long the battery life is and how quickly you want 
+            the robot to move
+        """
+        # Create all PNGs
+        for i, frame in enumerate(self.coord_list):
+            with open(f"temp_{i}.png", 'wb') as f:
+                w = png.Writer(
+                    len(self.warehouse.occupancy_grid[0]),
+                    len(self.warehouse.occupancy_grid),
+                    greyscale=True
+                )
+                data = self.warehouse.png_write_helper()
+                for b in self.warehouse.bases:
+                    data[b[0]][b[1]] = 127
+                data[frame[0]][frame[1]] = 63
+                w.write(f, data)
+
+        # Load the PNGs
+        frames = []
+        for i in range(self.battery_life):
+            new_frame = Image.open(f"temp_{i}.png")
+            frames.append(new_frame)
+        
+        # Save into a GIF file that loops forever
+        frames[0].save("path.gif", format='GIF',
+                    append_images=frames[1:],
+                    save_all=True,
+                    duration=(time/self.battery_life), loop=0)
+
+        # Purge temporary PNGs
+        for i in range(self.battery_life):
+            new_frame = os.remove(f"temp_{i}.png") 
         
