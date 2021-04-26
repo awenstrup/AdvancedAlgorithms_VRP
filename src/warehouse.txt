@@ -11,6 +11,6 @@ X X X X X X    X
 X X X X X X    X
 X X X X X X    X
 X X X X X X    X
-X              X
+X        B     X
 X              X
 XXXXXXXXXXXXXXXX

@@ -7,15 +7,17 @@ import png
 class Warehouse:
     """A small utility class to hold information about the warehouse we are opperating in"""
 
-    def __init__(self, path: str):
-        if ".txt" in path:
-            self.occupancy_grid, self.base = self.load_warehouse_from_txt(path)
-        elif ".png" in path:
-            self.occupancy_grid, self.base = self.load_warehouse_from_png(path)
+    def __init__(self, file_path: str):
+        if ".txt" in file_path:
+            self.occupancy_grid, self.bases = self.load_warehouse_from_txt(file_path)
+        elif ".png" in file_path:
+            self.occupancy_grid, self.bases = self.load_warehouse_from_png(file_path)
         else:
             raise Exception("Warehouse must be defined in a txt or png file")
 
-    def load_warehouse_from_txt(self, path: str) -> Tuple[List[List[bool]], Tuple[int, int]]:
+        print(self.bases)
+
+    def load_warehouse_from_txt(self, path: str) -> Tuple[List[List[bool]], List[Tuple[int, int]]]:
         """Given a path to a warehouse file, load it and return the useful information.
 
         :param str path: The path (hopefully absolute) to the .txt file representing the warehouse.
@@ -25,8 +27,8 @@ class Warehouse:
             * A 2D list of booleans; True spaces are occupied, False spaces can be traveled through.
             * A base point for a single robot
         """
-        occupancy_grid: list = []
-        base: tuple
+        occupancy_grid: List[List[bool]] = []
+        bases: List[tuple] = []
 
         with open(path) as f:
             for i, line in enumerate(f.readlines()):
@@ -38,9 +40,9 @@ class Warehouse:
                         occupancy_grid[i].append(False)
                     elif char == "B":
                         occupancy_grid[i].append(False)
-                        base = (i, j)
+                        bases.append((i, j))
 
-        return occupancy_grid, base
+        return occupancy_grid, bases
 
     def load_warehouse_from_png(self, path: str) -> Tuple[List[List[bool]], Tuple[int, int], Tuple[int, int]]:
         """Given a path to a PNG, load a warehouse.
@@ -48,8 +50,8 @@ class Warehouse:
         Expect obstacles in black, empty space in white, and robot charging
         stations in red
         """
-        occupancy_grid: list = []
-        base: tuple
+        occupancy_grid: List[List[bool]] = []
+        bases: List[Tuple[int, int]] = []
 
         with open(path, 'rb') as f:
             reader = png.Reader(file=f)
@@ -64,12 +66,9 @@ class Warehouse:
                         occupancy_grid[i].append(False)
                     else:
                         occupancy_grid[i].append(False)
-                        base = (i, j)
+                        bases.append((i, j))
 
-        try:
-            return occupancy_grid, base
-        except UnboundLocalError:
-            raise Exception("No charging base found in the given file!")
+            return occupancy_grid, bases
 
     def png_write_helper(self) -> List[List[int]]:
         out = []
@@ -92,6 +91,7 @@ class Warehouse:
                 greyscale=True
             )
             data = self.png_write_helper()
-            data[self.base[0]][self.base[1]] = 127
+            for b in self.bases:
+                data[b[0]][b[1]] = 127
             w.write(f, data)
 

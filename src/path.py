@@ -27,7 +27,7 @@ class Path:
         self.warehouse = warehouse
         self.base = base
         self.battery_life = battery_life
-        self.coord_list = coord_list if coord_list else [warehouse.base for i in range(battery_life)]
+        self.coord_list = coord_list if coord_list else [base for i in range(battery_life)]
 
     def get_current_location(self) -> Tuple[int, int]:
         """Get the most recent point on the path
