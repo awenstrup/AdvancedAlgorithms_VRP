@@ -3,7 +3,7 @@ X             BX
 X XXXXXXXXXXXX X
 X              X
 X XXXXXXXXXXXX X
-X              X
+X   B          X
 X XXXXXXXXXXXX X
 X X X X X X    X
 X X X X X X    X
@@ -12,5 +12,5 @@ X X X X X X    X
 X X X X X X    X
 X X X X X X    X
 X        B     X
-X              X
+X  B           X
 XXXXXXXXXXXXXXXX
