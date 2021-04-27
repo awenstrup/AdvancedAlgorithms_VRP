@@ -185,4 +185,59 @@ class Path:
         # Purge temporary PNGs
         for i in range(self.battery_life):
             new_frame = os.remove(f"temp_{i}.png") 
+
+def save_multiple_paths_as_gif(time: int, paths: List[Path]) -> None:
+    """Save a list of paths to a single gif"""
+    # Define the color palette for the gif
+    palette = [
+        (0xFF, 0xFF, 0xFF), # white for empty space
+        (0x00, 0x00, 0x00), # black for obstacles
+        (0x77, 0x77, 0x77), # gray for base stations
+        (0xFF, 0x00, 0x00), # red for a robot
+        (0x00, 0x00, 0xFF), # blue for a robot
+        (0x00, 0xFF, 0x00), # green for a robot
+        (0xFF, 0x69, 0x00), # orange for a robot
+        (0x6a, 0x00, 0xFF), # purple for a robot
+        ]
+
+    # Create all PNGs
+    for i, frame in enumerate(paths[0].coord_list):
+        with open(f"temp_{i}.png", 'wb') as f:
+            w = png.Writer(
+                len(paths[0].warehouse.occupancy_grid[0]),
+                len(paths[0].warehouse.occupancy_grid),
+                palette=palette,
+                bitdepth=4
+            )
+
+            # Get data, mapped from 0-1 not 0-255
+            data = paths[0].warehouse.png_write_helper()
+            for y, r in enumerate(data):
+                for x, c in enumerate(r):
+                    data[y][x] = 1 if c == 255 else 0
+
+            color: int = 3 # red is at index 3 in the color palette
+            for path in paths:
+                data[path.base[0]][path.base[1]] = 2 
+                data[path.coord_list[i][0]][path.coord_list[i][1]] = color
+                color += 1
+                if color > 7: color = 3
+            w.write(f, data)
+
+    # Load the PNGs
+    frames = []
+    for i in range(paths[0].battery_life):
+        new_frame = Image.open(f"temp_{i}.png")
+        frames.append(new_frame)
+    
+    # Save into a GIF file that loops forever
+    frames[0].save("path.gif", format='GIF',
+                append_images=frames[1:],
+                save_all=True,
+                duration=(time/paths[0].battery_life), loop=0)
+
+    # Purge temporary PNGs
+    for i in range(paths[0].battery_life):
+        new_frame = os.remove(f"temp_{i}.png") 
+    
         
