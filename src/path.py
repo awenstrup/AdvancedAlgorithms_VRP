@@ -35,6 +35,7 @@ class Path:
         self.base = base
         self.battery_life = battery_life
         self.coord_list = coord_list if coord_list else [base for i in range(battery_life)]
+        self.distance_multiplier = 0
 
     def get_current_location(self) -> Tuple[int, int]:
         """Get the most recent point on the path
@@ -140,7 +141,6 @@ class Path:
                 raise Exception(f"Invalid coord_list: {self.coord_list}")
         
     def fitness_func(self, sight_radius: int):
-        pass
         self.fitness_val = 0
         timeStepMap = copy.deepcopy((np.invert(self.warehouse.png_write_helper())+256)/255)
         timeMap = copy.deepcopy(10*self.battery_life*(np.invert(self.warehouse.png_write_helper())+256)/255)
@@ -149,8 +149,10 @@ class Path:
             #for robot in range(len(self.coord_list[0])):
             for point in self.surveyedNodes(self.coord_list[timeStep],sight_radius):
                 self.fitness_val += timeMap[point[0],point[1]]
+                self.fitness_val += self.distance_multiplier*self.euclidean_dist(self.coord_list[0],point)
                 timeMap[point[0],point[1]] = 0
-            timeMap += timeStepMap
+            #timeMap += timeStepMap
+
         # print(f"Fitness: ",{self.fitness_val})
             
         return self.fitness_val
