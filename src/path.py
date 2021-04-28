@@ -114,7 +114,7 @@ class Path:
         # Find all potential muations about the index
         n1: List[Tuple[int, int]] = set(self.get_valid_neighbors(target_index - 1))
         n2: List[Tuple[int, int]] = set(self.get_valid_neighbors(target_index + 1))
-        overlap = n1.intersection(n2)
+        overlap = n1 & n2
     
         # Choose a random valid neighbor to mutate to
         mutated_coord: Tuple[int, int] = random.choice(list(overlap))
