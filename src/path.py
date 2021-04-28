@@ -1,10 +1,13 @@
+#!/usr/bin/python3
 # Base python imports
 import os
 import random
+import copy
 from typing import Tuple, Optional, List, Union
+import numpy as np
 
 # Extended python imports
-from PIL import Image
+from PIL import Image, ImageOps
 import png
 
 # Project imports
@@ -137,18 +140,42 @@ class Path:
                 print(f"Moving from: {here} to: {there} is not allowed!")
                 raise Exception(f"Invalid coord_list: {self.coord_list}")
         
-    def fitness_func(self):
+    def fitness_func(self, sight_radius: int):
         pass
         self.fitness_val = 0
-        for coordinate in self.coord_list:
-            surveyedNodes = []
-            print(0)
-        # return self.fitness_val
+        timeStepMap = copy.deepcopy((np.invert(self.warehouse.png_write_helper())+256)/255)
+        timeMap = copy.deepcopy(10*self.battery_life*(np.invert(self.warehouse.png_write_helper())+256)/255)
+        
+        for timeStep in range(len(self.coord_list)):
+            #for robot in range(len(self.coord_list[0])):
+            for point in self.surveyedNodes(self.coord_list[timeStep],sight_radius):
+                self.fitness_val += timeMap[point[0],point[1]]
+                timeMap[point[0],point[1]] = 0
+                timeMap += timeStepMap
+        print(f"Fitness: ",{self.fitness_val})
+            
+        return self.fitness_val
 
     def add_point(self, point: Tuple[int, int]) -> None:
         """Add a new point to the path"""
         self.coord_list.append(point)
 
+    def surveyedNodes(self, point:Tuple[int,int], sight_radius:int):
+        xLoc = point[0]
+        yLoc = point[1]
+        surveyedNodes = []
+        
+        for x in range(xLoc-sight_radius,xLoc+sight_radius+1):
+            for y in range(yLoc-sight_radius, yLoc+sight_radius+1):
+
+                try:
+                    if (self.warehouse.occupancy_grid[x][y] == False):
+                        node = (x,y)
+                        surveyedNodes.append(node)
+                except IndexError:
+                    pass
+        return surveyedNodes
+        
     def save_as_gif(self, time: int):
         """Save the current path as a gif
         

@@ -15,5 +15,10 @@ if __name__ == "__main__":
         p3.mutate()
         p4.mutate()
         # print(p.coord_list)
+  
+    p2.fitness_func(2)
+    p3.fitness_func(2)
+    p4.fitness_func(2)
+    p1.fitness_func(2)
 
     save_multiple_paths_as_gif(10, [p1, p2, p3, p4])
