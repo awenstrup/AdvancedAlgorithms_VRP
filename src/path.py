@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # Base python imports
 import os
 import random
@@ -151,8 +150,8 @@ class Path:
             for point in self.surveyedNodes(self.coord_list[timeStep],sight_radius):
                 self.fitness_val += timeMap[point[0],point[1]]
                 timeMap[point[0],point[1]] = 0
-                timeMap += timeStepMap
-        print(f"Fitness: ",{self.fitness_val})
+            timeMap += timeStepMap
+        # print(f"Fitness: ",{self.fitness_val})
             
         return self.fitness_val
 
