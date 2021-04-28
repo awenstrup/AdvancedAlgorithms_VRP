@@ -6,7 +6,7 @@ from progress.bar import Bar
 if __name__ == "__main__":
     w1 = Warehouse("warehouse.txt")
     # w1.write_warehouse_to_png("warehouse.png")
-    p1 = Path(w1, w1.bases[3], battery_life=150)
+    p1 = Path(w1, w1.bases[3], battery_life=10)
     #p2 = Path(w1, w1.bases[1], battery_life=30)
     #p3 = Path(w1, w1.bases[2], battery_life=30)
     #p4 = Path(w1, w1.bases[3], battery_life=30)
@@ -33,6 +33,7 @@ if __name__ == "__main__":
         
     bar.finish()
     p1.fitness_func(2)
+    print(p1.coord_list)
     print(p1.fitness_val)
    
    
