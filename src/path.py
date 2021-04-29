@@ -4,8 +4,10 @@ import random
 import copy
 from typing import Tuple, Optional, List, Union
 import numpy as np
+import math
 
 # Extended python imports
+from progress.bar import Bar
 from PIL import Image, ImageOps
 import png
 
@@ -19,6 +21,7 @@ class Path:
         warehouse: Warehouse, 
         base: Tuple[int, int],
         battery_life: int = 100, 
+        vision_radius: int = 1,
         coord_list: Optional[List[Tuple[int, int]]] = None
     ):
         """Initialize a new (2 dimensional) Path object
@@ -35,8 +38,9 @@ class Path:
         self.base = base
         self.battery_life = battery_life
         self.coord_list = coord_list if coord_list else [base for i in range(battery_life)]
-        self.distance_multiplier = 0
-
+        self.vision_radius = vision_radius
+        self.distance_multiplier = 1
+        
     def get_current_location(self) -> Tuple[int, int]:
         """Get the most recent point on the path
         
@@ -140,18 +144,18 @@ class Path:
                 print(f"Moving from: {here} to: {there} is not allowed!")
                 raise Exception(f"Invalid coord_list: {self.coord_list}")
         
-    def fitness_func(self, sight_radius: int):
+    def fitness_func(self):
         self.fitness_val = 0
         timeStepMap = copy.deepcopy((np.invert(self.warehouse.png_write_helper())+256)/255)
         timeMap = copy.deepcopy(10*self.battery_life*(np.invert(self.warehouse.png_write_helper())+256)/255)
         
         for timeStep in range(len(self.coord_list)):
             #for robot in range(len(self.coord_list[0])):
-            for point in self.surveyedNodes(self.coord_list[timeStep],sight_radius):
+            for point in self.surveyedNodes(self.coord_list[timeStep]):
                 self.fitness_val += timeMap[point[0],point[1]]
                 self.fitness_val += self.distance_multiplier*self.euclidean_dist(self.coord_list[0],point)
                 timeMap[point[0],point[1]] = 0
-            #timeMap += timeStepMap
+            timeMap += timeStepMap
 
         # print(f"Fitness: ",{self.fitness_val})
             
@@ -161,13 +165,13 @@ class Path:
         """Add a new point to the path"""
         self.coord_list.append(point)
 
-    def surveyedNodes(self, point:Tuple[int,int], sight_radius:int):
+    def surveyedNodes(self, point:Tuple[int,int]):
         xLoc = point[0]
         yLoc = point[1]
         surveyedNodes = []
         
-        for x in range(xLoc-sight_radius,xLoc+sight_radius+1):
-            for y in range(yLoc-sight_radius, yLoc+sight_radius+1):
+        for x in range(xLoc-self.vision_radius,xLoc+self.vision_radius+1):
+            for y in range(yLoc-self.vision_radius, yLoc+self.vision_radius+1):
 
                 try:
                     if (self.warehouse.occupancy_grid[x][y] == False):
@@ -214,6 +218,32 @@ class Path:
         for i in range(self.battery_life):
             new_frame = os.remove(f"temp_{i}.png") 
 
+
+def simulated_annealing(path:Path,cycles:int):
+    pathEvolutions = []
+    pathEvolutions.append(path.coord_list)
+    bar = Bar('Mutating', max=cycles)
+    k = 1.5
+    for i in range(cycles):
+        pMutated = copy.deepcopy(path)
+        pMutated.mutate()
+
+        pMutated.distance_multiplier = math.exp((-1*abs(pMutated.fitness_val-path.fitness_val))/(k*i)) #.01*(i/cycles)
+        pMutated.fitness_func()
+        
+
+        if pMutated.fitness_val>path.fitness_val or (random.random() > math.exp((-1*abs(pMutated.fitness_val-path.fitness_val))/(k*i))):
+            print(pMutated.fitness_val)
+            path = copy.deepcopy(pMutated)
+            pathEvolutions.append(path.coord_list)
+            path.fitness_func()
+
+        bar.next()
+       
+    bar.finish()
+    path.fitness_func()
+    return path, pathEvolutions
+    
 def save_multiple_paths_as_gif(time: int, paths: List[Path]) -> None:
     """Save a list of paths to a single gif"""
     # Define the color palette for the gif
@@ -267,5 +297,74 @@ def save_multiple_paths_as_gif(time: int, paths: List[Path]) -> None:
     # Purge temporary PNGs
     for i in range(paths[0].battery_life):
         new_frame = os.remove(f"temp_{i}.png") 
-    
+
+
+def path_evolution_gif(evolvedPath, pathList,time):
+
+    """Save a list of paths to a single gif"""
+    # Define the color palette for the gif
+    palette = [
+        (0xFF, 0xFF, 0xFF), # white for empty space
+        (0x00, 0x00, 0x00), # black for obstacles
+        (0x77, 0x77, 0x77), # gray for base stations
+        (0xFF, 0x00, 0x00), # red for a robot
+        (0x00, 0x00, 0xFF), # blue for a robot
+        (0x00, 0xFF, 0x00), # green for a robot
+        (0xFF, 0x69, 0x00), # orange for a robot
+        (0x6a, 0x00, 0xFF), # purple for a robot
+        ]
+   
+    # Create all PNGs
+    for i, path in enumerate(pathList):
+        with open(f"temp_{i}.png", 'wb') as f:
+            w = png.Writer(
+                len(evolvedPath.warehouse.occupancy_grid[0]),
+                len(evolvedPath.warehouse.occupancy_grid),
+                palette=palette,
+                bitdepth=4
+            )
+            print(i)
+
+            # Get data, mapped from 0-1 not 0-255
+            data =  evolvedPath.warehouse.png_write_helper()
+            for y, r in enumerate(data):
+                for x, c in enumerate(r):
+                    data[y][x] = 1 if c == 255 else 0
+
+            color: int = 3 # red is at index 3 in the color palette
+
+            for coord in path:
+                data[coord[0]][coord[1]] = 3
+                data[coord[0]][coord[1]] = color
+            w.write(f, data)
+            
+    print("SUCCESFULLY")
+     # Load the PNGs
+    frames = []
+    '''
+    for i in range(len(pathList)):
+        print(i)
+        new_frame = Image.open(f"temp_{i}.png")
+        frames.append(new_frame)
+        #new_frame.close()
+        os.remove(f"temp_{i}.png") 
+    '''
+    for i in range(len(pathList)):
+        img = Image.open(f"temp_{i}.png")
+        frames.append(img.copy())
+        img.close()
+    # Save into a GIF file that loops forever
+    frames[0].save("path2.gif", format='GIF',
+                append_images=frames[1:],
+                save_all=True,
+                duration=(time/evolvedPath.battery_life), loop=0)
+
+    #Purge temporary PNGs
+    for i in range(len(pathList)):
+       os.remove(f"temp_{i}.png")  
+      
+
+
+
+
         
