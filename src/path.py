@@ -40,6 +40,14 @@ class Path:
         self.coord_list = coord_list if coord_list else [base for i in range(battery_life)]
         self.vision_radius = vision_radius
         self.distance_multiplier = 1
+
+    def copy(self):
+        return Path(
+            self.warehouse, 
+            self.base, 
+            self.battery_life, 
+            self.vision_radius, 
+            list(self.coord_list))
         
     def get_current_location(self) -> Tuple[int, int]:
         """Get the most recent point on the path

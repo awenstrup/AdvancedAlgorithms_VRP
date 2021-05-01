@@ -1,57 +1,68 @@
 # Base python imports
-from typing import List, Tuple
-
-# Extended python imports
-import numpy as np
+from typing import List
+import random
 
 # Project imports
-from path import Path
+from solution import Solution
 
-class Solution:
-    def __init__(self, paths: List[Path]):
-        self.paths = paths
-        self.fitness_val = 0
+class Generation:
+    def __init__(self, solutions: List[Solution]):
+        self.solutions = solutions
 
-    def surveillance_score(self) -> int:
-        """Return the portion of the fitness function corresponding
-        to how well the robots are surveiling
+    def copy(self):
+        return Generation([s.copy() for s in self.solutions])
+
+    def mutate(self):
+        """Insert a random mutation into a random path 
+        in a random solution
+
+        :rtype: Path
+        :returns: The path that was mutated
         """
-        # Initialize output variable
-        out = 0
-
-        # Pull out a few useful variables for later
-        warehouse = self.paths[0].warehouse
-        grid = warehouse.occupancy_grid
-
-        # Initialize warehouse grid score matrices
-        # 0's where a wall is located, 1's in empty space
-        def row(i): [int(not b) for b in grid[i]]
+        sol = random.choice(self.solutions)
+        path = random.choice(sol.paths)
+        path.mutate()
+        return path
     
-        # use arrays for 2D array addition
-        time_step_map = np.array([row(i) for i in grid]) 
-        time_map = np.copy(time_step_map)
-        
-        # Iterate over the path, step by step
-        for ts in range(len(self.paths[0].coord_list)):
+    def crossover(
+        self, 
+        solution_one_index: int = -1, 
+        solution_two_index: int = -1,
+        allow_same: bool = False
+        ) -> None:
+        """Swap two paths from two provided solutions. If none provided,
+        choose them randomly.
 
-            # For each point that any robot is looking at during the current timestep
-            for y, x in self.surveyed_nodes(ts):
-                self.fitness_val += time_map[y][x]
-                time_map[y][x] = 0
-            time_map += time_step_map
-            
+        :param int solution_one_index: The index in self.solutions of
+            the first solution. Default to random.
+
+        :param int solution_two_index: The index in self.solutions of
+            the second solution. Default to random.
+
+        :param bool allow_same: Allow the two solutions whose paths are being
+            swapped to be the same solution. Default to False.
+
+        :returns: None
+        """
+        # Select random paths from solutions
+        s1 = random.choice(self.solutions) if solution_one_index == -1 else self.solutions[solution_one_index]
+        s2 = random.choice(self.solutions) if solution_two_index == -1 else self.solutions[solution_two_index]
+
+        # Force the solutions to be different
+        while ((s1 is s2) and (not allow_same)):
+            s2 = random.choice(self.solutions)
+
+        p: int = random.choice(range(len(s1.paths)))
+        
+        # Swap p1 and p2
+        tmp = s1.paths[p]
+        s1.paths[p] = s2.paths[p]
+        s2.paths[p] = tmp
+
+    def __str__(self):
+        out = "Solution fitnesses:"
+        for i, sol in enumerate(self.solutions):
+            out += f" s{i}: {sol.fitness_func()}"
         return out
 
-    def surveyed_nodes(self, time: int) -> List[Tuple[int, int]]:
-        """Get all coordinated under surveillance at a given timestep"""
-        # Initialize output list
-        out = []
-
-        # Append all visible points
-        for path in self.paths:
-            out.append(path.surveyedNodes(path.coord_list[time]))
     
-        # Remove duplicates
-        return list(set(out))
-
-
