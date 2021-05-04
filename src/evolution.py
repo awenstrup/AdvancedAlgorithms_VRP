@@ -31,12 +31,12 @@ def evolve(gen1: Generation, cycles: int = 40):
 
         # Crossover - only crossover the last half, 
         # keep the best solutions untouched
-        for i in range(3): # arbitrary
+        for i in range(len(curr.solutions)): # arbitrary
             u, v = random.choices(range(n, num_solutions), k=2)
             curr.crossover(u, v)
 
         # Mutate - all
-        for i in range(5): # arbitrary
+        for i in range(len(curr.solutions) * 4): # arbitrary
             curr.mutate()
     
     save_multiple_paths_as_gif(10, curr.solutions[0].paths)

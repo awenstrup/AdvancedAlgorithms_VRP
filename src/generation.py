@@ -60,9 +60,6 @@ class Generation:
         s2.paths[p] = tmp
 
     def __str__(self):
-        out = "Solution fitnesses:"
-        for i, sol in enumerate(self.solutions):
-            out += f" s{i}: {sol.fitness_func()}"
-        return out
+        return f"Evolution fitnesses: {self.solutions[0].fitness_func()}"
 
     

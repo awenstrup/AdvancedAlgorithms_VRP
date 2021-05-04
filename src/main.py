@@ -7,26 +7,25 @@ import copy
 from progress.bar import Bar
 import random
 
+def solution_factory(w: Warehouse, batt: int):
+    paths = []
+    for base in w.bases:
+        paths.append(Path(w, base, battery_life=batt))
+    return Solution(paths)
+
+def generation_factory(w: Warehouse, batt: int, size: int):
+    solutions = []
+    for i in range(size):
+        solutions.append(solution_factory(w, batt))
+    return Generation(solutions)
+
 if __name__ == "__main__":
     w1 = Warehouse("warehouse.png")
     w1.write_warehouse_to_png("warehouse.png")
 
-    p1 = Path(w1, w1.bases[0], battery_life=30)
-    p2 = Path(w1, w1.bases[1], battery_life=30)
-    p3 = Path(w1, w1.bases[2], battery_life=30)
-    p4 = Path(w1, w1.bases[3], battery_life=30)
-    solution = Solution([p1, p2, p3, p4])
+    generation = generation_factory(w1, batt=30, size=12)
 
-    solutions = [
-        solution.copy(), 
-        solution.copy(), 
-        solution.copy(),
-        solution.copy()
-    ]
-
-    generation = Generation(solutions)
-
-    generation = evolve(generation, cycles=1000)
+    generation = evolve(generation, cycles=2500)
 
     save_multiple_paths_as_gif(
         10, 
