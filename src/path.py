@@ -37,7 +37,7 @@ class Path:
         self.warehouse = warehouse
         self.base = base
         self.battery_life = battery_life
-        self.coord_list = coord_list if coord_list else [base for i in range(battery_life)]
+        self.coord_list = coord_list if coord_list else self.gen_init_path()
         self.vision_radius = vision_radius
         self.distance_multiplier = 1
 
@@ -95,7 +95,34 @@ class Path:
     def euclidean_dist(self, p1: Tuple[int, int], p2: Tuple[int, int]) -> float:
         """Get the euclidean distance between two points"""
         return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
-    
+
+    def gen_init_path(self) -> None:
+        """Generate a better initial path"""
+        # Initialize path
+        coord_list = []
+        coord_list.append(self.base)
+
+        # Greedy algorithm generates path away from base
+        while(len(coord_list) < (self.battery_life/2)):
+            choices = self.get_valid_neighbors(coord_list[-1])
+            choice = max(
+                choices, 
+                key = lambda x : self.euclidean_dist(self.base, x)
+            )
+            coord_list.append(choice)
+
+        # Return to base
+        for i, c in enumerate(reversed(coord_list)):
+            if i == 0 and (self.battery_life % 2) == 1:
+                # don't reppeat furthest point if batt_life is odd
+                pass
+            else:
+                coord_list.append(c)
+
+        self.coord_list = coord_list
+        return coord_list
+        
+        
     def valid_mutation_indices(self) -> List[int]:
         """Get a list of places in the path where a mutation is possible
 
@@ -289,6 +316,7 @@ def save_multiple_paths_as_gif(time: int, paths: List[Path]) -> None:
                 color += 1
                 if color > 7: color = 3
             w.write(f, data)
+        scale_up_png(f"temp_{i}.png", 10)
 
     # Load the PNGs
     frames = []
@@ -331,7 +359,6 @@ def path_evolution_gif(evolvedPath, pathList,time):
                 palette=palette,
                 bitdepth=4
             )
-            print(i)
 
             # Get data, mapped from 0-1 not 0-255
             data =  evolvedPath.warehouse.png_write_helper()
@@ -369,7 +396,38 @@ def path_evolution_gif(evolvedPath, pathList,time):
 
     #Purge temporary PNGs
     for i in range(len(pathList)):
-       os.remove(f"temp_{i}.png")  
+       os.remove(f"temp_{i}.png") 
+
+def scale_up_png(filepath: str, scale: int) -> None:
+    """Scale up a .png file by a factor of scale"""
+    mat = []
+
+    # Define the color palette for the gif
+
+    with open(filepath, 'rb') as f:
+        reader = png.Reader(file=f)
+        w, h, data, info = reader.read()
+        for i, line in enumerate(data):
+            # write each line scale times
+            for x in range(scale):
+                mat.append([])
+                for j, pixel in enumerate(line):
+                    # write each pixel scale times
+                    for y in range(scale):
+                        mat[-1].append(pixel)
+
+    with open(filepath, 'wb') as f:
+        writer = png.Writer(
+            len(mat[0]),
+            len(mat),
+            greyscale=info["greyscale"],
+            bitdepth=info["bitdepth"],
+            palette=info["palette"]
+        )
+        writer.write(f, mat)
+
+
+    
       
 
 

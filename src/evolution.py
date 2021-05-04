@@ -14,7 +14,8 @@ def evolve(gen1: Generation, cycles: int = 40):
 
     for c in range(cycles):
         # Sort solutions from best to worst
-        curr.solutions.sort(key=lambda x : x.fitness_func())
+        curr.solutions.sort(key=lambda x : x.fitness_func(), reverse=True)
+        if (c % 10 == 0): print(curr)
 
         # Select top half of solutions, insert them each twice, make a new generation
         best = []
@@ -30,15 +31,13 @@ def evolve(gen1: Generation, cycles: int = 40):
 
         # Crossover - only crossover the last half, 
         # keep the best solutions untouched
-        for i in range(10): # arbitrary
+        for i in range(3): # arbitrary
             u, v = random.choices(range(n, num_solutions), k=2)
             curr.crossover(u, v)
 
         # Mutate - all
-        for i in range(200): # arbitrary
+        for i in range(5): # arbitrary
             curr.mutate()
-
-        if (c % 10 == 0): print(curr)
     
     save_multiple_paths_as_gif(10, curr.solutions[0].paths)
     return curr

@@ -62,7 +62,7 @@ class Solution:
         """Get the component of the fitness function that
         encourages robots to venture away from their bases
         """
-        coef = 20
+        coef = 10
         out = 0.0
 
         # Iterate over the paths, step by step

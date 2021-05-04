@@ -26,7 +26,17 @@ if __name__ == "__main__":
 
     generation = Generation(solutions)
 
-    evolve(generation, cycles=500)
+    generation = evolve(generation, cycles=1000)
+
+    save_multiple_paths_as_gif(
+        10, 
+        [
+            generation.solutions[0].paths[0],
+            generation.solutions[0].paths[1],
+            generation.solutions[0].paths[2],
+            generation.solutions[0].paths[3],
+        ]
+    )
 
     # p1.fitness_func()
     # print(p1.fitness_val)
