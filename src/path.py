@@ -37,8 +37,8 @@ class Path:
         self.warehouse = warehouse
         self.base = base
         self.battery_life = battery_life
-        # self.gen_init_path()
-        self.coord_list = coord_list if coord_list else [self.base for i in range(self.battery_life)]
+        # Naive coord list initialization: [self.base for i in range(self.battery_life)]
+        self.coord_list = coord_list if coord_list else self.gen_init_path()
         self.vision_radius = vision_radius
         self.distance_multiplier = 1
 
@@ -106,9 +106,12 @@ class Path:
         # Greedy algorithm generates path away from base
         while(len(coord_list) < (self.battery_life/2)):
             choices = self.get_valid_neighbors(coord_list[-1])
+            # introduce a tiny bit of noise to the greedy choices,
+            # to choose different paths when they are just as good
             choice = max(
                 choices, 
-                key = lambda x : self.euclidean_dist(self.base, x)
+                key = lambda x : self.euclidean_dist(self.base, x) + 
+                (random.random()/20)
             )
             coord_list.append(choice)
 

@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     generation = generation_factory(w1, batt=30, size=12)
 
-    generation = evolve(generation, cycles=2500)
+    generation = evolve(generation, cycles=500)
 
     save_multiple_paths_as_gif(
         10, 
